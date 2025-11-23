@@ -36,9 +36,6 @@ app.use(cors({
   credentials: true
 }));
 
-// Middleware parse JSON & URL encoded
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // MongoDB Connection
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
@@ -56,8 +53,11 @@ mongoose.connect(mongoUri)
     process.exit(1);
   });
 
+console.log("Kn thành công"); 
+
 // Routes
 app.use('/api/auth', authRoutes);
+console.log("Router oke");
 
 // Basic Route
 app.get('/', (req, res) => {
