@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
 const authRoutes = require('./src/routes/authRoutes');
+// const authController = require('./src/controllers/authController');
 
 // Load environment variables
 dotenv.config();
@@ -15,6 +16,12 @@ if (fs.existsSync(altEnv)) {
 }
 
 const app = express();
+
+// Simple request logger to help debug missing routes
+app.use((req, res, next) => {
+  console.log(`[req] ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 // Danh sách các front-end được phép
 const allowedOrigins = [
@@ -56,7 +63,11 @@ mongoose.connect(mongoUri)
 console.log("Kn thành công"); 
 
 // Routes
-app.use('/api/auth', authRoutes);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use('/api/auth', require('./src/routes/authRoutes'));
 console.log("Router oke");
 
 // Basic Route
@@ -73,11 +84,11 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
+// 404 handler - include requested path for easier debugging
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Route không tìm thấy'
+    message: `Route không tìm thấy: ${req.method} ${req.originalUrl}`
   });
 });
 
