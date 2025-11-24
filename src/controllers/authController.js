@@ -17,11 +17,13 @@ exports.signup = async (req, res) => {
         message: 'Email đã được sử dụng'
       });
     }
-
+    //Hash pass
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(password, salt);
     // Tạo user mới
     const user = await User.create({
       email,
-      password,
+      password: hashedPassword,
       name
     });
 
