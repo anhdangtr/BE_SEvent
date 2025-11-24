@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
 const authRoutes = require('./src/routes/authRoutes');
-// const authController = require('./src/controllers/authController');
+const eventRoutes = require('./src/routes/eventRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -63,11 +63,12 @@ mongoose.connect(mongoUri)
 console.log("Kn thành công"); 
 
 // Routes
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/auth', require('./src/routes/authRoutes'));
+//Fetch all revent routes
+app.use('/api/events', eventRoutes);
 console.log("Router oke");
 
 // Basic Route
