@@ -43,6 +43,10 @@ app.use(cors({
   credentials: true
 }));
 
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 
 // MongoDB Connection
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
@@ -60,16 +64,19 @@ mongoose.connect(mongoUri)
     process.exit(1);
   });
 
-console.log("Kn thành công"); 
+// Authentication Routes
+app.use('/api/auth', require('./src/routes/authRoutes'));
+//Fetch all revent routes
+app.use('/api/events', eventRoutes);
+console.log("Router event oke");
 
 // Routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/api/auth', require('./src/routes/authRoutes'));
+
 //Fetch all revent routes
 app.use('/api/events', eventRoutes);
-console.log("Router oke");
 
 // Basic Route
 app.get('/', (req, res) => {

@@ -86,7 +86,7 @@ const getTrendingEvents = async (req, res) => {
 };
 
 // GET /api/events/:id - Lấy chi tiết 1 sự kiện
-const getEventById = async (req, res) => {
+/*const getEventById = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -109,6 +109,162 @@ const getEventById = async (req, res) => {
     res.status(500).json({ success: false, message: 'Lỗi server' });
   }
 };
+*/
+
+// Get event by ID
+const getEventById = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    // Validate eventId format
+    if (!eventId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid event ID format'
+      });
+    }
+
+    const event = await Event.findById(eventId).populate('category');
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: event
+    });
+  } catch (error) {
+    console.error('Get event by ID error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+// Check if user liked the event
+const checkIfUserLiked = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const userId = req.user._id; // From authenticate middleware
+
+    // Validate eventId format
+    if (!eventId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid event ID format'
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const isLiked = user.interestingEvents.some(
+      (item) => item.event.toString() === eventId
+    );
+
+    res.status(200).json({
+      success: true,
+      isLiked: isLiked
+    });
+  } catch (error) {
+    console.error('Check like error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+// Toggle like/unlike event
+const toggleLikeEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const userId = req.user._id; // From authenticate middleware
+
+    // Validate eventId format
+    if (!eventId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid event ID format'
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found'
+      });
+    }
+
+    // Check if user already liked this event
+    const alreadyLiked = user.interestingEvents.some(
+      (item) => item.event.toString() === eventId
+    );
+
+    let isLiked;
+
+    if (alreadyLiked) {
+      // Unlike event: remove from user's interestingEvents and decrease counter
+      user.interestingEvents = user.interestingEvents.filter(
+        (item) => item.event.toString() !== eventId
+      );
+      event.interestingCount = Math.max(0, event.interestingCount - 1);
+      isLiked = false;
+    } else {
+      // Like event: add to user's interestingEvents and increase counter
+      user.interestingEvents.push({
+        event: eventId,
+        likedAt: new Date()
+      });
+      event.interestingCount = event.interestingCount + 1;
+      isLiked = true;
+    }
+
+    // Save both user and event
+    await user.save();
+    await event.save();
+
+    res.status(200).json({
+      success: true,
+      isLiked: isLiked,
+      interestingCount: event.interestingCount,
+      message: alreadyLiked ? 'Event unliked' : 'Event liked'
+    });
+  } catch (error) {
+    console.error('Toggle like error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+
 
 // POST /api/events - Tạo sự kiện mới (cần auth)
 const createEvent = async (req, res) => {
@@ -131,14 +287,14 @@ const createEvent = async (req, res) => {
   }
 };
 
-// PUT /api/events/:id - Cập nhật sự kiện
+// PUT /api/events/:eventId - Cập nhật sự kiện
 const updateEvent = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { eventId } = req.params;
     const updates = req.body;
 
     const event = await Event.findByIdAndUpdate(
-      id,
+      eventId,
       { ...updates, updatedAt: Date.now() },
       { new: true, runValidators: true }
     );
@@ -158,12 +314,12 @@ const updateEvent = async (req, res) => {
   }
 };
 
-// DELETE /api/events/:id - Xóa sự kiện
+// DELETE /api/events/:eventId - Xóa sự kiện
 const deleteEvent = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { eventId } = req.params;
 
-    const event = await Event.findByIdAndDelete(id);
+    const event = await Event.findByIdAndDelete(eventId);
 
     if (!event) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy sự kiện' });
@@ -179,13 +335,13 @@ const deleteEvent = async (req, res) => {
   }
 };
 
-// POST /api/events/:id/like - Like sự kiện (tăng interestingCount)
+// POST /api/events/:eventId/like - Like sự kiện (tăng interestingCount)
 const likeEvent = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { eventId } = req.params;
 
     const event = await Event.findByIdAndUpdate(
-      id,
+      eventId,
       { $inc: { interestingCount: 1 } },
       { new: true }
     );
@@ -204,13 +360,13 @@ const likeEvent = async (req, res) => {
   }
 };
 
-// POST /api/events/:id/save - Lưu sự kiện
+// POST /api/events/:eventId/save - Lưu sự kiện
 const saveEvent = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { eventId } = req.params;
 
     const event = await Event.findByIdAndUpdate(
-      id,
+      eventId,
       { $inc: { saveCount: 1 } },
       { new: true }
     );
@@ -237,5 +393,7 @@ module.exports = {
   updateEvent,
   deleteEvent,
   likeEvent,
-  saveEvent
+  saveEvent,
+  checkIfUserLiked,
+  toggleLikeEvent
 };

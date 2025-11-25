@@ -16,13 +16,18 @@ const router = express.Router();
 // Public Routes (không cần auth)
 router.get('/', getAllEvents);                    // Lấy tất cả events với pagination
 router.get('/trending', getTrendingEvents);       // Lấy events nổi bật
-router.get('/:id', getEventById);                 // Lấy chi tiết event
+router.get('/:eventId', getEventById);            // Lấy chi tiết event theo ID
+
+// Check if user liked the event (protected route)
+router.get('/:eventId/check-like', authenticate, checkIfUserLiked);
+// Toggle like/unlike event (protected route)
+router.post('/:eventId/toggle-like', authenticate, toggleLikeEvent);
 
 // Private Routes (cần auth), dành cho admin
 router.post('/', auth, createEvent);              // Tạo event mới
-router.put('/:id', auth, updateEvent);            // Cập nhật event
-router.delete('/:id', auth, deleteEvent);         // Xóa event
-router.post('/:id/like', auth, likeEvent);        // Like event
-router.post('/:id/save', auth, saveEvent);        // Save event
+router.put('/:eventId', auth, updateEvent);            // Cập nhật event
+router.delete('/:eventId', auth, deleteEvent);         // Xóa event
+router.post('/:eventId/like', auth, likeEvent);        // Like event
+router.post('/:eventId/save', auth, saveEvent);        // Save event
 
 module.exports = router;
