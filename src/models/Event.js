@@ -12,7 +12,7 @@ const eventSchema = new mongoose.Schema({
   startDate: Date,
   endDate: Date,
   location: String,
-  category: { type: mongoose.Schema.Types.ObjectId, ref: 'EventCategory' },
+  category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
   organization: String,
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   createdAt: { type: Date, default: Date.now },

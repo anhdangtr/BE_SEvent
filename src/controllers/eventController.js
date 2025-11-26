@@ -1,6 +1,7 @@
 // src/controllers/eventController.js
 
 const Event = require('../models/Event');
+const User = require('../models/User');
 const mongoose = require('mongoose');
 
 // GET /api/events - Lấy danh sách sự kiện + phân trang + tìm kiếm + lọc category
@@ -99,7 +100,7 @@ const getEventById = async (req, res) => {
       });
     }
 
-    const event = await Event.findById(eventId).populate('category');
+    const event = await Event.findById(eventId);
 
     if (!event) {
       return res.status(404).json({
@@ -239,77 +240,6 @@ const toggleLikeEvent = async (req, res) => {
   }
 };
 
-
-
-// POST /api/events - Tạo sự kiện mới (cần auth)
-const createEvent = async (req, res) => {
-  try {
-    const eventData = {
-      ...req.body,
-      createdBy: req.user.id // từ middleware auth
-    };
-
-    const event = await Event.create(eventData);
-
-    res.status(201).json({
-      success: true,
-      message: 'Tạo sự kiện thành công',
-      data: event
-    });
-  } catch (error) {
-    console.error('Error in createEvent:', error);
-    res.status(500).json({ success: false, message: 'Lỗi khi tạo sự kiện' });
-  }
-};
-
-// PUT /api/events/:eventId - Cập nhật sự kiện
-const updateEvent = async (req, res) => {
-  try {
-    const { eventId } = req.params;
-    const updates = req.body;
-
-    const event = await Event.findByIdAndUpdate(
-      eventId,
-      { ...updates, updatedAt: Date.now() },
-      { new: true, runValidators: true }
-    );
-
-    if (!event) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy sự kiện' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Cập nhật thành công',
-      data: event
-    });
-  } catch (error) {
-    console.error('Error in updateEvent:', error);
-    res.status(500).json({ success: false, message: 'Lỗi khi cập nhật' });
-  }
-};
-
-// DELETE /api/events/:eventId - Xóa sự kiện
-const deleteEvent = async (req, res) => {
-  try {
-    const { eventId } = req.params;
-
-    const event = await Event.findByIdAndDelete(eventId);
-
-    if (!event) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy sự kiện' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Xóa sự kiện thành công'
-    });
-  } catch (error) {
-    console.error('Error in deleteEvent:', error);
-    res.status(500).json({ success: false, message: 'Lỗi khi xóa' });
-  }
-};
-
 // POST /api/events/:eventId/like - Like sự kiện (tăng interestingCount)
 const likeEvent = async (req, res) => {
   try {
@@ -360,15 +290,55 @@ const saveEvent = async (req, res) => {
   }
 };
 
+
+
+// Create a new event (admin or authenticated users depending on app rules)
+const createEvent = async (req, res) => {
+  try {
+    const payload = req.body;
+    const newEvent = await Event.create(payload);
+    res.status(201).json({ success: true, data: newEvent });
+  } catch (error) {
+    console.error('Create event error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi khi tạo sự kiện' });
+  }
+};
+
+// Update an existing event
+const updateEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const updated = await Event.findByIdAndUpdate(eventId, req.body, { new: true });
+    if (!updated) return res.status(404).json({ success: false, message: 'Event not found' });
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Update event error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi khi cập nhật sự kiện' });
+  }
+};
+
+// Delete an event
+const deleteEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const deleted = await Event.findByIdAndDelete(eventId);
+    if (!deleted) return res.status(404).json({ success: false, message: 'Event not found' });
+    res.json({ success: true, message: 'Event deleted' });
+  } catch (error) {
+    console.error('Delete event error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi khi xóa sự kiện' });
+  }
+};
+
 module.exports = {
   getAllEvents,
   getEventById,
   getTrendingEvents,
+  likeEvent,
+  saveEvent,
   createEvent,
   updateEvent,
   deleteEvent,
-  likeEvent,
-  saveEvent,
   checkIfUserLiked,
   toggleLikeEvent
 };
