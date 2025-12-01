@@ -18,7 +18,7 @@ const router = express.Router();
 // Public Routes (không cần auth)
 router.get('/', getAllEvents);                    // Lấy tất cả events với pagination
 router.get('/trending', getTrendingEvents);       // Lấy events nổi bật
-router.get('/:eventId', getEventById);            // Lấy chi tiết event theo ID
+router.get('/:eventId', auth, getEventById);            // Lấy chi tiết event theo ID
 
 // Check if user liked the event (protected route)
 router.get('/:eventId/check-like', auth, checkIfUserLiked);
