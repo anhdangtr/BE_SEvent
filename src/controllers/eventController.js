@@ -6,7 +6,10 @@ const mongoose = require('mongoose');
 
 // GET /api/events - Lấy danh sách sự kiện + phân trang + tìm kiếm + lọc category
 const getAllEvents = async (req, res) => {
+<<<<<<< HEAD
   
+=======
+>>>>>>> 33bf93028ade5eb5ffd3c543919c5ec2305b1787
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 9;

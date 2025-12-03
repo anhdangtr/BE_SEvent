@@ -8,6 +8,10 @@ const authenticate = async (req, res, next) => {
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
+<<<<<<< HEAD
+=======
+      console.log('[auth] Authorization header present, token length:', token ? token.length : 0);
+>>>>>>> 33bf93028ade5eb5ffd3c543919c5ec2305b1787
     }
 
     if (!token) {
@@ -15,6 +19,10 @@ const authenticate = async (req, res, next) => {
     }
 
     const decoded = verifyToken(token);
+<<<<<<< HEAD
+=======
+    console.log('[auth] verifyToken result:', decoded ? `id=${decoded.id}` : 'null');
+>>>>>>> 33bf93028ade5eb5ffd3c543919c5ec2305b1787
     if (!decoded) {
       return sendError(res, 401, 'Token không hợp lệ hoặc đã hết hạn');
     }

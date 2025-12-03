@@ -7,6 +7,7 @@ const path = require('path');
 const authRoutes = require('./src/routes/authRoutes');
 const eventRoutes = require('./src/routes/eventRoutes');
 const categoryRoutes = require('./src/routes/categoryRoutes');
+<<<<<<< HEAD
 
 // Load environment variables from the project directory explicitly so
 // running node with a different cwd still loads BE/.env
@@ -17,6 +18,13 @@ if (result.error) {
 } else {
   console.log(`[dotenv] loaded env from ${envPath}`);
 }
+=======
+const reminderRoutes = require('./src/routes/reminderRoutes');
+const savedEventRoutes = require('./src/routes/savedEventRoutes');
+
+// Load environment variables
+dotenv.config();
+>>>>>>> 33bf93028ade5eb5ffd3c543919c5ec2305b1787
 const altEnv = path.join(__dirname, 'src', '.env');
 if (fs.existsSync(altEnv)) {
   dotenv.config({ path: altEnv, override: true });
@@ -31,6 +39,7 @@ app.use((req, res, next) => {
   next();
 });
 
+<<<<<<< HEAD
 // Configure CORS origins from env, include 127.0.0.1 variants, and be
 // permissive in non-production to avoid dev-time 403 issues.
 const rawCors = process.env.CORS_ORIGIN || 'http://localhost:3000,http://localhost:5173,http://localhost:5174';
@@ -66,6 +75,26 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+=======
+// Danh sách các front-end được phép
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:5174'
+];
+
+// Middleware CORS duy nhất
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+>>>>>>> 33bf93028ade5eb5ffd3c543919c5ec2305b1787
 }));
 
 // Middleware
@@ -114,6 +143,17 @@ console.log("Router event oke");
 app.use('/api', categoryRoutes);
 console.log("Router category oke");
 
+<<<<<<< HEAD
+=======
+// Reminder Routes
+app.use('/api/reminders', reminderRoutes);
+console.log("Router reminder oke");
+
+// Saved Event Routes
+app.use('/api/saved-events', savedEventRoutes);
+console.log("Router saved-events oke");
+
+>>>>>>> 33bf93028ade5eb5ffd3c543919c5ec2305b1787
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -133,7 +173,14 @@ app.use((req, res) => {
 });
 
 // Start Server
+<<<<<<< HEAD
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`\n🚀 Server đang chạy tại http://localhost:${PORT}`);
 });
+=======
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`\n🚀 Server đang chạy tại http://localhost:${PORT}`);
+});
+>>>>>>> 33bf93028ade5eb5ffd3c543919c5ec2305b1787
