@@ -7,6 +7,8 @@ const path = require('path');
 const authRoutes = require('./src/routes/authRoutes');
 const eventRoutes = require('./src/routes/eventRoutes');
 const categoryRoutes = require('./src/routes/categoryRoutes');
+const reminderRoutes = require('./src/routes/reminderRoutes');
+const savedEventRoutes = require('./src/routes/savedEventRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -89,6 +91,14 @@ console.log("Router event oke");
 // Category Routes
 app.use('/api', categoryRoutes);
 console.log("Router category oke");
+
+// Reminder Routes
+app.use('/api/reminders', reminderRoutes);
+console.log("Router reminder oke");
+
+// Saved Event Routes
+app.use('/api/saved-events', savedEventRoutes);
+console.log("Router saved-events oke");
 
 
 // Error handling middleware
