@@ -6,9 +6,6 @@ const fs = require('fs');
 const path = require('path');
 const authRoutes = require('./src/routes/authRoutes');
 const eventRoutes = require('./src/routes/eventRoutes');
-const categoryRoutes = require('./src/routes/categoryRoutes');
-const reminderRoutes = require('./src/routes/reminderRoutes');
-const savedEventRoutes = require('./src/routes/savedEventRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -49,7 +46,6 @@ app.use(cors({
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-console.log("Middleware oke");
 
 
 // MongoDB Connection
@@ -68,38 +64,24 @@ mongoose.connect(mongoUri)
     process.exit(1);
   });
 
+// Authentication Routes
+app.use('/api/auth', require('./src/routes/authRoutes'));
+//Fetch all revent routes
+app.use('/api/events', eventRoutes);
+console.log("Router event oke");
 
 // Routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-console.log("express oke");
+
+
+//Fetch all revent routes
+app.use('/api/events', eventRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {
   res.json({ message: 'API Server đang chạy' });
 });
-console.log("Basic route oke");
-
-// Authentication Routes
-app.use('/api/auth', authRoutes);
-console.log("Router auth oke");
-
-//Fetch all revent routes
-app.use('/api/events', eventRoutes);
-console.log("Router event oke");
-
-// Category Routes
-app.use('/api', categoryRoutes);
-console.log("Router category oke");
-
-// Reminder Routes
-app.use('/api/reminders', reminderRoutes);
-console.log("Router reminder oke");
-
-// Saved Event Routes
-app.use('/api/saved-events', savedEventRoutes);
-console.log("Router saved-events oke");
-
 
 // Error handling middleware
 app.use((err, req, res, next) => {
