@@ -20,8 +20,9 @@ const savedEventRoutes = require('./src/routes/savedEventRoutes');
 //send reminder
 const {startReminderScheduler} = require('./src/service/reminderSchedual');
 
-// Load environment variables; prefer `src/.env` when present
 
+
+// Load environment variables; prefer `src/.env` when present
 const altEnv = path.join(__dirname, 'src', '.env');
 if (fs.existsSync(altEnv)) {
   dotenv.config({ path: altEnv, override: true });
@@ -102,9 +103,6 @@ console.log("Router auth oke");
 //Fetch all revent routes
 app.use('/api/events', eventRoutes);
 console.log("Router event oke");
-
-//Fetch all revent routes
-app.use('/api/events', eventRoutes);
 
 // Category Routes
 app.use('/api', categoryRoutes);
