@@ -21,22 +21,6 @@ router.get('/', auth, getSavedEvents);
 // Move event
 router.put('/:eventId', auth, updateSavedEvent);
 
-const ensureIsFunction = (name, fn) => {
-  if (typeof fn !== 'function') {
-    console.error(`[savedEventRoutes] Expected ${name} to be a function but got:`, typeof fn);
-    throw new TypeError(`savedEventRoutes: handler '${name}' is not a function (found ${typeof fn})`);
-  }
-};
-
-// Validate handlers early to provide clearer errors than the router library
-ensureIsFunction('auth', auth);
-ensureIsFunction('saveEvent', saveEvent);
-ensureIsFunction('getSavedEvents', getSavedEvents);
-ensureIsFunction('getSavedEventsByFolder', getSavedEventsByFolder);
-ensureIsFunction('updateSavedEvent', updateSavedEvent);
-ensureIsFunction('deleteSavedEvent', deleteSavedEvent);
-ensureIsFunction('getFolderList', getFolderList);
-
 // Delete saved event
 router.delete('/:eventId', auth, deleteSavedEvent);
 
