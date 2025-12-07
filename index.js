@@ -85,11 +85,6 @@ mongoose.connect(mongoUri)
     process.exit(1);
   });
 
-  // Routes
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-console.log("express oke");
-
 // Basic Route
 app.get('/', (req, res) => {
   res.json({ message: 'API Server đang chạy' });

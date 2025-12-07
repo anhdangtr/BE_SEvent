@@ -22,8 +22,16 @@ const eventSchema = new mongoose.Schema({
   interestingCount: { type: Number, default: 0 },
   saveCount: { type: Number, default: 0 },
 
-  // ⭐ Mảng user đã like (bắt buộc để .includes() không crash)
+  //Mảng user đã like
   interestingEvents: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  ],
+
+  //Mảng user đã save (thêm mới)
+  savedBy: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
