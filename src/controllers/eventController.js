@@ -3,6 +3,12 @@
 const Event = require('../models/Event');
 const User = require('../models/User');
 const mongoose = require('mongoose');
+const { sendError } = require('../utils/responseHelper');
+
+
+// =========================================================
+//  1. FETCH EVENT API — GET LIST, SEARCH, FILTER, TRENDING
+// =========================================================
 
 // GET /api/events - Lấy danh sách sự kiện + phân trang + tìm kiếm + lọc category
 const getAllEvents = async (req, res) => {
@@ -13,12 +19,10 @@ const getAllEvents = async (req, res) => {
 
     const { search, category } = req.query;
 
-    // Xây dựng query tìm kiếm
     let query = {};
 
-    // Tìm theo từ khóa trong title, location, ogranization (không phân biệt hoa thường)
     if (search && search.trim() !== '') {
-      const regex = new RegExp(search.trim(), 'i'); // không phân biệt hoa thường
+      const regex = new RegExp(search.trim(), 'i');
       query.$or = [
         { title: { $regex: regex } },
         { location: { $regex: regex } },
@@ -26,21 +30,18 @@ const getAllEvents = async (req, res) => {
       ];
     }
 
-    // Lọc theo danh mục (category là String: tech, business, education, entertainment)
     if (category && category !== 'all') {
       query.category = category;
     }
 
-    // Đếm tổng số sự kiện thỏa điều kiện
     const totalEvents = await Event.countDocuments(query);
 
-    // Lấy danh sách sự kiện
     const events = await Event.find(query)
-      .sort({ startDate: -1, createdAt: -1 }) // Sự kiện sắp tới trước, mới tạo trước
+      .sort({ startDate: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .select('-__v') // Không trả về trường __v
-      .lean(); // Tăng tốc độ
+      .select('-__v')
+      .lean();
 
     const totalPages = Math.ceil(totalEvents / limit);
 
@@ -63,7 +64,7 @@ const getAllEvents = async (req, res) => {
   }
 };
 
-// GET /api/events/trending - Lấy sự kiện nổi bật (dựa trên interestingCount + saveCount)
+// GET /api/events/trending - Lấy sự kiện nổi bật
 const getTrendingEvents = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 3;
@@ -92,12 +93,11 @@ const getTrendingEvents = async (req, res) => {
 };
 
 
-// Get event by ID
+// GET /api/events/:eventId - Lấy theo ID
 const getEventById = async (req, res) => {
   try {
     const { eventId } = req.params;
 
-    // Validate eventId format
     if (!eventId.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({
         success: false,
@@ -128,176 +128,11 @@ const getEventById = async (req, res) => {
   }
 };
 
-// Check if user liked the event
-const checkIfUserLiked = async (req, res) => {
-  try {
-    const { eventId } = req.params;
-    const userId = req.user._id; // From authenticate middleware
 
-    // Validate eventId format
-    if (!eventId.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid event ID format'
-      });
-    }
+// =========================================================
+//  2. CRUD EVENT — CREATE / UPDATE / DELETE - DÀNH CHO ADMIN
+// =========================================================
 
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    const isLiked = user.interestingEvents.some(
-      (item) => item.event.toString() === eventId
-    );
-
-    res.status(200).json({
-      success: true,
-      isLiked: isLiked
-    });
-  } catch (error) {
-    console.error('Check like error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-};
-
-// Toggle like/unlike event
-const toggleLikeEvent = async (req, res) => {
-  try {
-    const { eventId } = req.params;
-    const userId = req.user._id; // From authenticate middleware
-
-    // Validate eventId format
-    if (!eventId.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid event ID format'
-      });
-    }
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    const event = await Event.findById(eventId);
-
-    if (!event) {
-      return res.status(404).json({
-        success: false,
-        message: 'Event not found'
-      });
-    }
-
-    // Check if user already liked this event
-    const alreadyLiked = user.interestingEvents.some(
-      (item) => item.event.toString() === eventId
-    );
-
-    let isLiked;
-
-    if (alreadyLiked) {
-      // Unlike event: remove from user's interestingEvents and decrease counter
-      user.interestingEvents = user.interestingEvents.filter(
-        (item) => item.event.toString() !== eventId
-      );
-      event.interestingCount = Math.max(0, event.interestingCount - 1);
-      isLiked = false;
-    } else {
-      // Like event: add to user's interestingEvents and increase counter
-      user.interestingEvents.push({
-        event: eventId,
-        likedAt: new Date()
-      });
-      event.interestingCount = event.interestingCount + 1;
-      isLiked = true;
-    }
-
-    // Save both user and event
-    await user.save();
-    await event.save();
-
-    res.status(200).json({
-      success: true,
-      isLiked: isLiked,
-      interestingCount: event.interestingCount,
-      message: alreadyLiked ? 'Event unliked' : 'Event liked'
-    });
-  } catch (error) {
-    console.error('Toggle like error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-};
-
-// POST /api/events/:eventId/like - Like sự kiện (tăng interestingCount)
-const likeEvent = async (req, res) => {
-  try {
-    const { eventId } = req.params;
-
-    const event = await Event.findByIdAndUpdate(
-      eventId,
-      { $inc: { interestingCount: 1 } },
-      { new: true }
-    );
-
-    if (!event) {
-      return res.status(404).json({ success: false, message: 'Sự kiện không tồn tại' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Đã thích sự kiện',
-      data: { interestingCount: event.interestingCount }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Lỗi server' });
-  }
-};
-
-// POST /api/events/:eventId/save - Lưu sự kiện
-const saveEvent = async (req, res) => {
-  try {
-    const { eventId } = req.params;
-
-    const event = await Event.findByIdAndUpdate(
-      eventId,
-      { $inc: { saveCount: 1 } },
-      { new: true }
-    );
-
-    if (!event) {
-      return res.status(404).json({ success: false, message: 'Sự kiện không tồn tại' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Đã lưu sự kiện',
-      data: { saveCount: event.saveCount }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Lỗi server' });
-  }
-};
-
-
-
-// Create a new event (admin or authenticated users depending on app rules)
 const createEvent = async (req, res) => {
   try {
     const payload = req.body;
@@ -309,7 +144,6 @@ const createEvent = async (req, res) => {
   }
 };
 
-// Update an existing event
 const updateEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -322,7 +156,6 @@ const updateEvent = async (req, res) => {
   }
 };
 
-// Delete an event
 const deleteEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -335,15 +168,175 @@ const deleteEvent = async (req, res) => {
   }
 };
 
+
+// =========================================================
+//  3. LIKE & SAVE API — ĐƯA XUỐNG CUỐI FILE
+// =========================================================
+
+// CHECK user liked - dùng trong Front-end để hiển thị trạng thái like
+const checkIfUserLiked = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+
+    const isLiked = user.interestingEvents.some(
+      (item) => item.event.toString() === eventId
+    );
+
+    res.status(200).json({
+      success: true,
+      isLiked
+    });
+  } catch (error) {
+    console.error('Check like error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+
+// =========================================================
+//  TOGGLE LIKE
+// =========================================================
+const toggleLikeEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const userId = req.user._id;
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return sendError(res, "Event không tồn tại", 404);
+    }
+
+    let isLiked = false;
+
+    if (event.interestingEvents.includes(userId)) {
+      // If already liked → remove like
+      await Event.updateOne(
+        { _id: eventId },
+        {
+          $pull: { interestingEvents: userId },
+          $inc: { interestingCount: -1 }
+        }
+      );
+    } else {
+      // If not liked → add like
+      await Event.updateOne(
+        { _id: eventId },
+        {
+          $push: { interestingEvents: userId },
+          $inc: { interestingCount: 1 }
+        }
+      );
+      isLiked = true;
+    }
+
+    const updated = await Event.findById(eventId);
+
+    return res.json({
+      success: true,
+      data: {
+        isLiked,
+        interestingCount: updated.interestingCount
+      }
+    });
+  } catch (error) {
+    console.error("Toggle like error:", error);
+    return sendError(res, "Lỗi server khi toggle like");
+  }
+};
+
+// =========================================================
+//  TOGGLE SAVE
+// =========================================================
+const toggleSaveEvent = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { eventId } = req.params;
+
+    const user = await User.findById(userId);
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Sự kiện không tồn tại"
+      });
+    }
+
+    // Tạo folder Watch later nếu chưa có
+    let folder = user.savedFolders.find(f => f.name === "Watch later");
+
+    if (!folder) {
+      folder = { name: "Watch later", events: [] };
+      user.savedFolders.push(folder);
+    }
+
+    const alreadySaved = folder.events.some(e => e.event.toString() === eventId);
+
+    if (alreadySaved) {
+      // Remove event khỏi folder
+      folder.events = folder.events.filter(e => e.event.toString() !== eventId);
+
+      // Giảm saveCount nhưng KHÔNG dùng event.save()
+      await Event.updateOne(
+        { _id: eventId },
+        { $inc: { saveCount: -1 } }
+      );
+
+      await user.save();
+
+      const updated = await Event.findById(eventId);
+
+      return res.json({
+        success: true,
+        message: "Đã bỏ lưu",
+        isSaved: false,
+        saveCount: updated.saveCount
+      });
+
+    } else {
+      // Thêm vào folder
+      folder.events.push({ event: eventId });
+
+      // Tăng saveCount bằng updateOne
+      await Event.updateOne(
+        { _id: eventId },
+        { $inc: { saveCount: 1 } }
+      );
+
+      await user.save();
+
+      const updated = await Event.findById(eventId);
+
+      return res.json({
+        success: true,
+        message: "Đã lưu vào Watch later",
+        isSaved: true,
+        saveCount: updated.saveCount
+      });
+    }
+  } catch (error) {
+    console.error("Toggle save error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server"
+    });
+  }
+};
+
+// =========================================================
+// EXPORT
+// =========================================================
 module.exports = {
   getAllEvents,
   getEventById,
   getTrendingEvents,
-  likeEvent,
-  saveEvent,
   createEvent,
   updateEvent,
   deleteEvent,
   checkIfUserLiked,
-  toggleLikeEvent
+  toggleLikeEvent,
+  toggleSaveEvent
 };

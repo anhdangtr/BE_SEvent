@@ -6,30 +6,29 @@ const {
   createEvent, 
   updateEvent, 
   deleteEvent,
-  likeEvent,
-  saveEvent,
   checkIfUserLiked,
-  toggleLikeEvent
+  toggleLikeEvent,
+  toggleSaveEvent
 } = require('../controllers/eventController');
-const auth = require('../middleware/authMiddleware'); // Middleware xác thực JWT
+
+const auth = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Public Routes (không cần auth)
-router.get('/', getAllEvents);                    // Lấy tất cả events với pagination
-router.get('/trending', getTrendingEvents);       // Lấy events nổi bật
-router.get('/:eventId', auth, getEventById);            // Lấy chi tiết event theo ID
 
-// Check if user liked the event (protected route)
-router.get('/:eventId/check-like', auth, checkIfUserLiked);
-// Toggle like/unlike event (protected route)
-router.post('/:eventId/toggle-like', auth, toggleLikeEvent);
+// PUBLIC ROUTES
+router.get('/', getAllEvents);                 // Lấy tất cả events (có pagination)
+router.get('/trending', getTrendingEvents);    // Lấy events nổi bật
 
-// Private Routes (cần auth), dành cho admin
-router.post('/', auth, createEvent);              // Tạo event mới
-router.put('/:eventId', auth, updateEvent);            // Cập nhật event
-router.delete('/:eventId', auth, deleteEvent);         // Xóa event
-router.post('/:eventId/like', auth, likeEvent);        // Like event
-router.post('/:eventId/save', auth, saveEvent);        // Save event
+// USER ACTIONS (CẦN LOGIN)
+router.post('/:eventId/toggle-like', auth, toggleLikeEvent);  // Like / Unlike
+router.post('/:eventId/toggle-save', auth, toggleSaveEvent);  // Save / Unsave (folder Watch Later)
+router.get('/:eventId/check-liked', auth, checkIfUserLiked); // Kiểm tra user đã like event chưa
+router.get('/:eventId', auth, getEventById);   // Lấy chi tiết event (cần login vì có thông tin user đã like/save chưa)
+
+// ADMIN ROUTES (CẦN LOGIN + ADMIN ROLE)
+router.post('/', auth, createEvent);           // Tạo event mới
+router.put('/:eventId', auth, updateEvent);    // Cập nhật event
+router.delete('/:eventId', auth, deleteEvent); // Xóa event
 
 module.exports = router;
