@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const Event = require('./models/Event');
-const Category = require('./models/EventCategory');
+const Category = require('./models/Category');
 
 async function debug() {
   try {
@@ -28,15 +28,22 @@ async function debug() {
       console.log(`  Category Constructor: ${e.category?.constructor?.name}`);
     });
 
-    // 3. Test query
-    const testCategoryId = '6935c87fdf7bfe8ffc733680';
-    console.log(`\n=== TEST QUERY VỚI ID: ${testCategoryId} ===`);
+    // 3. Test query - Với String
+    const testCategoryId = '6935c87fdf7bfe8ffc73367f';
+    console.log(`\n=== TEST QUERY VỚI STRING: ${testCategoryId} ===`);
 
-    const results = await Event.find({ category: testCategoryId });
-    console.log(`Kết quả: ${results.length} events`);
-    results.forEach(e => {
+    const resultsString = await Event.find({ category: testCategoryId });
+    console.log(`Kết quả: ${resultsString.length} events`);
+
+    // 4. Test query - Với ObjectId (CÁCH ĐÚNG)
+    console.log(`\n=== TEST QUERY VỚI OBJECTID ===`);
+    const objectId = new mongoose.Types.ObjectId(testCategoryId);
+    const resultsObjectId = await Event.find({ category: objectId });
+    console.log(`Kết quả: ${resultsObjectId.length} events`);
+    resultsObjectId.forEach(e => {
       console.log(`- ${e.title}`);
     });
+    
 
     // 4. Kiểm tra xem có event nào có category không
     const eventsWithCategory = await Event.find({ category: { $exists: true, $ne: null } });
