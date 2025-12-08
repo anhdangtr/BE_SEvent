@@ -50,20 +50,31 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'http://localhost:5174',
+  'https://sevent.onrender.com',
   'https://sevent-chi.vercel.app'
 ];
 
 // Middleware CORS duy nhất
 app.use(cors({
   origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Log origin for debugging
+    console.log('Request origin:', origin);
+    
+    // Allow requests with no origin (mobile apps, Postman, curl, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.log('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Middleware
