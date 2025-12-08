@@ -41,9 +41,7 @@ const app = express();
 
 // Simple request logger to help debug missing routes
 app.use((req, res, next) => {
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-  res.setHeader("Pragma", "no-cache");
-  res.setHeader("Expires", "0");
+  console.log(`[req] ${req.method} ${req.originalUrl}`);
   next();
 });
 
@@ -52,8 +50,8 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'http://localhost:5174',
-  'https://sevent-chi.vercel.app',
-  'https://sevent.onrender.com'
+  'https://sevent.onrender.com',
+  'https://sevent-chi.vercel.app'
 ];
 
 // Middleware CORS duy nhất
@@ -149,6 +147,4 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`\n🚀 Server đang chạy tại http://localhost:${PORT}`);
-  console.log(`📊 MongoDB Connected: ${!!process.env.MONGODB_URI}`);
-  console.log(`🔐 JWT Secret Set: ${!!process.env.JWT_SECRET}`);
 });
