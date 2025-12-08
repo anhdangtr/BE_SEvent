@@ -6,9 +6,14 @@ const { sendReminderEmail } = require('./emailService');
 
 // Kiểm tra reminders mỗi phút
 const startReminderScheduler = () => {
+  console.log('[Scheduler] Starting reminder scheduler...');
+  console.log('[Scheduler] Environment:', process.env.VERCEL ? 'VERCEL' : 'LOCAL');
+  
   cron.schedule('* * * * *', async () => {
     try {
       const now = new Date();
+      console.log('[Scheduler] Checking reminders at:', now.toISOString());
+      
       // Tìm các reminder trong vòng 2 phút
       const reminders = await Reminder.find({
         isSent: false,
@@ -17,11 +22,15 @@ const startReminderScheduler = () => {
           $lte: now
         }
       }).populate('userId').populate('eventId');
+      
+      console.log(`[Scheduler] Found ${reminders.length} pending reminders`);
 
       for (const reminder of reminders) {
         try {
           const user = reminder.userId;
           const event = reminder.eventId;
+
+          console.log(`[Scheduler] Processing reminder ${reminder._id} for user ${user.email}`);
 
           // Gửi email với đầy đủ thông tin event
           const emailSent = await sendReminderEmail(
@@ -36,9 +45,12 @@ const startReminderScheduler = () => {
           if (emailSent) {
             reminder.isSent = true;
             await reminder.save();
+            console.log(`[Scheduler] ✓ Email sent successfully for reminder ${reminder._id}`);
+          } else {
+            console.log(`[Scheduler] ✗ Email failed for reminder ${reminder._id}`);
           }
         } catch (error) {
-          console.error(`Lỗi xử lý reminder ${reminder._id}:`, error);
+          console.error(`[Scheduler] Error processing reminder ${reminder._id}:`, error);
         }
       }
     } catch (error) {

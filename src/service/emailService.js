@@ -4,9 +4,13 @@ const EMAIL_USER = process.env.EMAIL_USER && process.env.EMAIL_USER.trim();
 const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD && process.env.EMAIL_PASSWORD.trim();
 
 const sendReminderEmail = async (userEmail, userName, eventData, note, reminderDateTime) => {
+  console.log(`[Email] Attempting to send reminder to ${userEmail}`);
+  console.log(`[Email] EMAIL_USER configured: ${!!EMAIL_USER}`);
+  console.log(`[Email] EMAIL_PASSWORD configured: ${!!EMAIL_PASSWORD}`);
+  
   // If credentials are not configured, skip attempting to send and log a clear message.
   if (!EMAIL_USER || !EMAIL_PASSWORD) {
-    console.warn('[email] Skipping sendReminderEmail: missing EMAIL_USER or EMAIL_PASSWORD');
+    console.warn('[Email] ✗ Skipping sendReminderEmail: missing EMAIL_USER or EMAIL_PASSWORD');
     return false;
   }
 
@@ -101,11 +105,13 @@ const sendReminderEmail = async (userEmail, userName, eventData, note, reminderD
   };
 
   try {
+    console.log(`[Email] Sending email to ${userEmail}...`);
     await transporter.sendMail(mailOptions);
-    console.log(`Email gửi thành công đến ${userEmail}`);
+    console.log(`[Email] ✓ Email sent successfully to ${userEmail}`);
     return true;
   } catch (error) {
-    console.error('Lỗi gửi email:', error && error.message ? error.message : error);
+    console.error(`[Email] ✗ Error sending email to ${userEmail}:`, error.message);
+    console.error('[Email] Full error:', error);
     return false;
   }
 };

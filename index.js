@@ -19,6 +19,7 @@ const reminderRoutes = require('./src/routes/reminderRoutes');
 const savedEventRoutes = require('./src/routes/savedEventRoutes');
 const getProfileRoutes = require('./src/routes/getProfileRoutes');
 const userRoutes = require('./src/routes/userRoutes');
+const cronRoutes = require('./src/routes/cronRoutes');
 //send reminder
 const {startReminderScheduler} = require('./src/service/reminderSchedual');
 
@@ -132,6 +133,10 @@ console.log("Router get profile oke");
 app.use('/api/user', userRoutes);
 console.log("Router user oke");
 
+// Cron Routes (for external cron services)
+app.use('/api/cron', cronRoutes);
+console.log("Router cron oke");
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -141,8 +146,13 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start reminder scheduler
-startReminderScheduler();
+// Start reminder scheduler (only works locally, not on Vercel)
+if (!process.env.VERCEL) {
+  startReminderScheduler();
+  console.log('✓ Local cron scheduler started');
+} else {
+  console.log('⚠ Running on Vercel - use external cron service to call /api/cron/check-reminders');
+}
 
 // 404 handler - include requested path for easier debugging
 app.use((req, res) => {
