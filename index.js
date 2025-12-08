@@ -49,7 +49,8 @@ app.use((req, res, next) => {
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
-  'http://localhost:5174'
+  'http://localhost:5174',
+  'https://sevent-chi.vercel.app'
 ];
 
 // Middleware CORS duy nhất
