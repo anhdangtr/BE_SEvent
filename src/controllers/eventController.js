@@ -31,9 +31,8 @@ const getAllEvents = async (req, res) => {
     }
 
     if (category && category !== 'all') {
-      const mongoose = require('mongoose');
       try {
-        query.category = mongoose.Types.ObjectId(category);
+        query.category = new mongoose.Types.ObjectId(category);
       } catch (err) {
         query.category = category; // fallback nếu không phải ObjectId
       }
