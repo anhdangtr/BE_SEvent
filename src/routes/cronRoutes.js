@@ -5,7 +5,50 @@ const { sendReminderEmail } = require('../service/emailService');
 
 const router = express.Router();
 
-// Endpoint để check và gửi reminders (được gọi bởi external cron service)
+/**
+ * @swagger
+ * /api/cron/check-reminders:
+ *   get:
+ *     summary: Kiểm tra và gửi các reminder đến hạn (Cron Job)
+ *     tags: [Cron Jobs]
+ *     description: Endpoint này được gọi bởi external cron service để kiểm tra và gửi reminder emails
+ *     parameters:
+ *       - in: query
+ *         name: secret
+ *         schema:
+ *           type: string
+ *         description: Secret key để xác thực cron job
+ *       - in: header
+ *         name: x-cron-secret
+ *         schema:
+ *           type: string
+ *         description: Secret key trong header
+ *     responses:
+ *       200:
+ *         description: Kiểm tra reminder thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: number
+ *                     sent:
+ *                       type: number
+ *                     failed:
+ *                       type: number
+ *       401:
+ *         description: Không có quyền truy cập (sai secret key)
+ *       500:
+ *         description: Lỗi server
+ */
 router.get('/check-reminders', async (req, res) => {
   try {
     // Bảo mật: chỉ cho phép request từ cron service

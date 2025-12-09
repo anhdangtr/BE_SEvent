@@ -20,10 +20,9 @@ const savedEventRoutes = require('./src/routes/savedEventRoutes');
 const getProfileRoutes = require('./src/routes/getProfileRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const cronRoutes = require('./src/routes/cronRoutes');
+const swaggerSetup = require('./swagger');
 //send reminder
 const {startReminderScheduler} = require('./src/service/reminderSchedual');
-
-
 
 // Load environment variables; prefer `src/.env` when present
 const altEnv = path.join(__dirname, 'src', '.env');
@@ -82,6 +81,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 console.log("Middleware oke");
 
+// Setup Swagger documentation
+swaggerSetup(app);
+console.log("Swagger documentation oke");
 
 // MongoDB Connection
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
